@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.2",
+    "simple-peer": "^9.11.0",
     "socket.io": "^4.4.0",
     "uuid": "^8.3.2",
     "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.4.0"

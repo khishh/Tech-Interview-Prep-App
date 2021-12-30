@@ -1,12 +1,17 @@
 import { Button, TextField } from '@mui/material';
-import React, { RefObject, useEffect, useRef, useState } from 'react';
-import { socket } from '../SocketContext';
+import React, { useContext, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { socket } from '../Socket';
+import { SocketContext } from '../SocketContext';
 
 export const Home = () => {
 
+    const {username, setUsername} = useContext(SocketContext);
+
     const [roomId, setRoom] = useState('');
-    const [username, setusername] = useState('');
     const [isCreatingRoom, setisCreatingRoom] = useState(false);
+
+    const navigate = useNavigate();
 
     useEffect(() => {
     }, [])
@@ -14,14 +19,24 @@ export const Home = () => {
     const joinRoom = () => {
         if (roomId.length > 0 && username.length > 0) {
             console.log(`${roomId} ${username}`);
-            socket.emit('joinRoom', roomId, username);
+            navigate(`/room/${roomId}`, {
+                state: {
+                    username: username
+                }
+            });
         }
     }
 
     const createRoom = () => {
         if(username.length > 0) {
             console.log(`create new Room by ${username}`);
-            socket.emit('createRoom', username);
+            socket.emit('createRoom', username, (roomId) => {
+                navigate(`/room/${roomId}`, {
+                    state: {
+                        username: username
+                    }
+                });
+            });
         }
     }
 
@@ -33,7 +48,7 @@ export const Home = () => {
             </div>}
 
             <div>
-                <TextField id="outlined-basic" label="Username" variant="outlined" value={username} onChange={event => setusername(event.target.value)} />
+                <TextField id="outlined-basic" label="Username" variant="outlined" onChange={event => setUsername(event.target.value) }/>
                 <br />
             </div>
             {
