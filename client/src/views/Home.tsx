@@ -1,17 +1,23 @@
-import { Button, TextField } from '@mui/material';
-import React, { useContext, useEffect, useState } from 'react';
+import { Button, Grid, TextField } from '@mui/material';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { socket } from '../Socket';
 import { SocketContext } from '../SocketContext';
+import '../index.css';
 
 export const Home = () => {
 
-    const {username, setUsername} = useContext(SocketContext);
+    const { username, setUsername } = useContext(SocketContext);
 
     const [roomId, setRoom] = useState('');
     const [isCreatingRoom, setisCreatingRoom] = useState(false);
 
     const navigate = useNavigate();
+
+    const codeMirrorRef = useRef<HTMLDivElement>();
+
+    console.log(username);
+    
 
     useEffect(() => {
     }, [])
@@ -28,7 +34,7 @@ export const Home = () => {
     }
 
     const createRoom = () => {
-        if(username.length > 0) {
+        if (username.length > 0) {
             console.log(`create new Room by ${username}`);
             socket.emit('createRoom', username, (roomId) => {
                 navigate(`/room/${roomId}`, {
@@ -42,24 +48,22 @@ export const Home = () => {
 
     return (
         <>
-            {!isCreatingRoom && <div>
+            {!isCreatingRoom && <div className="p-2">
                 <TextField id="outlined-basic" label="Room Id" variant="outlined" value={roomId} onChange={event => setRoom(event.target.value)} />
-                <br />
             </div>}
 
-            <div>
-                <TextField id="outlined-basic" label="Username" variant="outlined" onChange={event => setUsername(event.target.value) }/>
-                <br />
+            <div className="p-2">
+                <TextField id="outlined-basic" label="Username" variant="outlined" value={username} onChange={event => setUsername(event.target.value)} />
             </div>
             {
-                !isCreatingRoom && <Button variant="contained" onClick={joinRoom}>Join Room</Button>
+                !isCreatingRoom && <div className="p-2"><Button variant="contained" onClick={joinRoom}>Join Room</Button></div>
             }
             {
-                isCreatingRoom && <Button variant="contained" onClick={createRoom}>Create Room</Button>
+                isCreatingRoom && <div className="p-2"><Button className="p-2" variant="contained" onClick={createRoom}>Create Room</Button></div>
             }
 
-            <br /><br />
             <Button variant="outlined" onClick={() => setisCreatingRoom(prev => !prev)}>{isCreatingRoom ? 'Join an existing room' : 'Create a new room'}</Button>
+
         </>
     )
 }

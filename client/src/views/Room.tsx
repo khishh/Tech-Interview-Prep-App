@@ -1,24 +1,36 @@
-import { emit } from "process";
 import React, { useContext, useEffect } from "react";
-import { useLocation, useParams } from "react-router-dom";
-import { Socket } from "socket.io-client";
+import { useParams } from "react-router-dom";
 import { VideoPlayer } from "../components/VideoPlayer";
 import { socket } from "../Socket";
 import { SocketContext } from "../SocketContext";
 import Peer from 'simple-peer';
 import { PeerVideoPlayer } from "../components/PeerVideoPlayer";
+import { Grid } from "@mui/material";
+import '../index.css';
 
-type stateType = {
-    username: string
-}
+import CodeMirror from '@uiw/react-codemirror';
+import { javascript } from '@codemirror/lang-javascript';
+
+// type stateType = {
+//     username: string
+// }
+
+var count = 0;
 
 export const Room = () => {
 
     const { roomId } = useParams();
 
-    const { userVideoRef, peerVideoRef, userstream, username: yourname, createPeer, peers, setPeers, addPeer, } = useContext(SocketContext);
+    const { userVideoRef, peerVideoRef, userstream, userId, username: yourname, createPeer, peers, setPeers, addPeer, code, setCode, onDisconnect} = useContext(SocketContext);
+
+    console.log(`peers size: ${peers.length}`);
+    
 
     useEffect(() => {
+
+        // if(!socket.connected) {
+        //     socket.connect();
+        // }
 
         navigator.mediaDevices.getUserMedia({ video: true, audio: true })
             .then((stream) => {
@@ -26,7 +38,7 @@ export const Room = () => {
                 userstream.current = stream;
 
                 socket.emit('joinRoom', roomId!, yourname);
-
+                socket.emit('fetchCode', roomId!);
 
                 socket.on('newUserJoined', usersInTheRoom => {
 
@@ -38,7 +50,7 @@ export const Room = () => {
                     usersInTheRoom.forEach(({ userId, username }) => {
                         console.log(userId + " " + socket.id);
 
-                        if (userId != socket.id) {
+                        if (userId !== socket.id) {
                             const peer = createPeer(userId, socket.id, stream);
 
                             peerVideoRef.current.push({
@@ -70,21 +82,74 @@ export const Room = () => {
                 socket.on('callAccepted', (signalData, acceptedUserId) => {
                     console.log(`${yourname}: your call to ${acceptedUserId} was accepted`);
 
-                    const peerRefWithAcceptedUser = peerVideoRef.current.find((peer: { userId: string; }) => peer.userId == acceptedUserId);
+                    const peerRefWithAcceptedUser = peerVideoRef.current.find((peer: { userId: string; }) => peer.userId === acceptedUserId);
                     if (peerRefWithAcceptedUser) {
                         peerRefWithAcceptedUser.peer.signal(signalData);
                     }
                 });
+
+                socket.on('distributeCode', (code) => {
+                    setCode(code);
+                });
+
+                socket.on('userLeft', (leftUserId, leftUsername) => {
+                    console.log(`${leftUsername} has left the room`);
+                    
+                    const peerRefOfLeftUser = peerVideoRef.current.find((peer: { userId: string; }) => peer.userId === leftUserId);
+                    if(peerRefOfLeftUser) {
+                        const remainingPeers = peers.filter((peer) => peer !== peerRefOfLeftUser.peer);
+                        console.log(`remainingPeers size : ${remainingPeers.length}`);
+                        peerRefOfLeftUser.peer.destroy();
+                        setPeers(remainingPeers);
+                        peerVideoRef.current = peerVideoRef.current.filter(peer => peer.userId !== leftUserId);
+                        console.log(`peerVideoRef size : ${peerVideoRef.current.length}`);
+                        
+                    }
+                });
             });
 
+            window.addEventListener('popstate', (event) => {
+                if(userstream.current) {
+                    userstream.current.getTracks().forEach(track => {
+                        console.log(`${track.kind} is stopping...`);
+                        track.stop();
+                    });
+                    
+                } 
+                socket.emit('leaveRoom', roomId!, userId);
+                // socket.removeAllListeners();
+                // onDisconnect();
+                window.location.href = '/';
+            });
 
+            return () => {
+                console.log('useEffect returning callback called');
+                window.removeEventListener('popstate', () => {});
+            }
     }, [])
 
     return (
         <>
             <h1>{`You are currently in room : ${roomId}`}</h1>
-            <VideoPlayer username={yourname} videoRef={userVideoRef} />
-            {peers.map(peer => <PeerVideoPlayer peerUserName="user2" peer={peer} />)}
+            <div style={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
+                <Grid style={{ flex: 1 }} container>
+                    <VideoPlayer username={yourname} videoRef={userVideoRef} />
+                    {peers.map(peer => <PeerVideoPlayer peerUserName="user2" peer={peer} />)}
+                </Grid>
+                <div style={{ flex: 1 }}>
+                    <CodeMirror
+                        value={code}
+                        width='100%'
+                        height="500px"
+                        extensions={[javascript({ jsx: true })]}
+                        onChange={(value, viewUpdate) => {
+                            console.log('value:', value);
+                            socket.emit('codeChanged', roomId!, value);
+                        }}
+                    />
+                </div>
+            </div>
+
         </>
     )
 }
