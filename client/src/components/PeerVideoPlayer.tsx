@@ -11,24 +11,28 @@ export const PeerVideoPlayer = (props: PeerVideoPlayerProps) => {
 
     useEffect(() => {
         console.log('useEffect: PeerVideoPlayer userId has changed!');
-        
-        props.peer.on('stream', (stream) => {
-            console.log('useEffect: PeerVideoPlayer stream streaming...');
-            if(videoRef.current){ 
-                videoRef.current.srcObject = stream;
-            }
-        });
-        return () => {
+
+        // props.peer.on('stream', (stream) => {
+        //     console.log('useEffect: PeerVideoPlayer stream streaming...');
+        //     if(videoRef.current){ 
+        //         videoRef.current.srcObject = stream;
+        //     }
+        // });
+        // return () => {
+        // }
+
+        if (videoRef.current) {
+            videoRef.current.srcObject = props.stream;
         }
-            
+
     }, [props.userId])
 
     return (
         // <Paper>
-            <Grid item xs={12} md={6}>
-              <Typography style={{padding: '10'}} variant="h5" gutterBottom>{props.peerUserName || 'Name'}</Typography>
-              <video playsInline muted autoPlay ref={videoRef}/>
-            </Grid>
+        <Grid item xs={12} md={6}>
+            <Typography style={{ padding: '10' }} variant="h5" gutterBottom>{props.peerUserName || 'Name'}</Typography>
+            <video playsInline muted autoPlay ref={videoRef} />
+        </Grid>
         // </Paper>
     )
 }
@@ -37,4 +41,5 @@ type PeerVideoPlayerProps = {
     userId: string,
     peerUserName: string,
     peer: Peer.Instance,
+    stream: MediaStream
 }

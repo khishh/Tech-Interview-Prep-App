@@ -17,7 +17,7 @@ export const Room = () => {
 
     // const { userVideoRef, peerVideoRef, userstream, userId, username: yourname, peers, setPeers, createPeer, addPeer, code, setCode, onUserLeft } = useContext(SocketContext);
     const { userId, username: yourname } = useContext(SocketContext);
-    
+
 
     // const [peers, setPeers] = useState<Peer.Instance[]>([]);
     const [calls, setCalls] = useState<Call[]>([]);
@@ -62,10 +62,19 @@ export const Room = () => {
                                 peer: existingPeer
                             });
 
-                            existingCalls.push({ 
-                                peername: username, 
-                                peeruserId: userId,
-                                peer: existingPeer
+                            existingPeer.on('stream', stream => {
+                                // existingCalls.push({ 
+                                //     peername: username, 
+                                //     peeruserId: userId,
+                                //     peer: existingPeer,
+                                //     stream
+                                // });
+                                setCalls((prevCalls) => [...prevCalls, {
+                                    peername: username,
+                                    peeruserId: userId,
+                                    peer: existingPeer,
+                                    stream
+                                }]);
                             });
 
                             existingPeers.push(existingPeer);
@@ -73,7 +82,7 @@ export const Room = () => {
 
                     });
                     // setPeers((prevPeers) => [...prevPeers, ...existingPeers]);
-                    setCalls((prevCalls) => [...prevCalls, ...existingCalls]);
+                    // setCalls((prevCalls) => [...prevCalls, ...existingCalls]);
                 });
 
                 socket.on('callingUser', (callerId, signalData, callerUsername) => {
@@ -88,11 +97,16 @@ export const Room = () => {
                     });
 
                     // setPeers((prevPeers) => [...prevPeers, peer]);
-                    setCalls((prevCalls) => [...prevCalls, {
-                        peeruserId: callerId,
-                        peername: callerUsername,
-                        peer: peer
-                    }]);
+
+                    peer.on('stream', stream => {
+                        setCalls((prevCalls) => [...prevCalls, {
+                            peeruserId: callerId,
+                            peername: callerUsername,
+                            peer: peer,
+                            stream
+                        }]);
+                    });
+
                 });
 
                 socket.on('callAccepted', (signalData, acceptedUserId) => {
@@ -146,7 +160,7 @@ export const Room = () => {
             window.removeEventListener('popstate', () => { });
         }
     }, []);
-    
+
     // anytime after the number of user in the room changes
     useEffect(() => {
         // console.log('useEffect: The number of peers changes to ' + peers.length);
@@ -157,21 +171,21 @@ export const Room = () => {
             console.log(`${leftUsername} has left the room`);
             // console.log(peers);
             console.log(calls);
-    
+
             const peerRefOfLeftUser = peerVideoRef.current.find((peer: { userId: string; }) => peer.userId === leftUserId);
             if (peerRefOfLeftUser) {
                 // const remainingPeers = peers.filter((peer) => peer !== peerRefOfLeftUser.peer);
-                const remainingCalls = calls.filter((call) => call.peeruserId !== leftUserId); 
+                const remainingCalls = calls.filter((call) => call.peeruserId !== leftUserId);
                 console.log(remainingCalls);
-    
+
                 peerRefOfLeftUser.peer.destroy();
                 // setPeers(remainingPeers);
                 setCalls(remainingCalls);
                 peerVideoRef.current = peerVideoRef.current.filter(peer => peer.userId !== leftUserId);
-    
+
             }
         });
-        
+
         return () => {
             console.log(`useEffect: socket.off userLeft event`);
             socket.off('userLeft');
@@ -184,7 +198,7 @@ export const Room = () => {
 
     const createPeer = (userIdToCall: string, callerId: string, stream: MediaStream) => {
         console.log('createPeer');
-        
+
         const peer = new Peer({ initiator: true, trickle: false, stream });
 
         peer.on('signal', signal => {
@@ -215,7 +229,7 @@ export const Room = () => {
                 <Grid style={{ flex: 1 }} container>
                     <VideoPlayer username={yourname} videoRef={userVideoRef} />
                     {/* {peers.map(peer => <PeerVideoPlayer userId="userId" peerUserName="user2" peer={peer} />)} */}
-                    {calls.map(call => <PeerVideoPlayer userId={call.peeruserId} peerUserName={call.peername} peer={call.peer} />)}
+                    {calls.map(call => <PeerVideoPlayer key={call.peeruserId} userId={call.peeruserId} peerUserName={call.peername} peer={call.peer} stream={call.stream} />)}
                 </Grid>
                 <div style={{ flex: 1 }}>
                     <CodeMirror
@@ -238,5 +252,6 @@ export const Room = () => {
 type Call = {
     peer: Peer.Instance,
     peername: string,
-    peeruserId: string
+    peeruserId: string,
+    stream: MediaStream
 };
