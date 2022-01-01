@@ -5,18 +5,23 @@ import '../index.css';
 
 export const PeerVideoPlayer = (props: PeerVideoPlayerProps) => {
 
+
+    console.log('PeerVideoPlayer rerendered ...' + props.userId);
     const videoRef = useRef<HTMLVideoElement | null>(null);
 
     useEffect(() => {
+        console.log('useEffect: PeerVideoPlayer userId has changed!');
+        
         props.peer.on('stream', (stream) => {
+            console.log('useEffect: PeerVideoPlayer stream streaming...');
             if(videoRef.current){ 
                 videoRef.current.srcObject = stream;
             }
         });
         return () => {
-            
         }
-    }, [])
+            
+    }, [props.userId])
 
     return (
         // <Paper>
@@ -29,6 +34,7 @@ export const PeerVideoPlayer = (props: PeerVideoPlayerProps) => {
 }
 
 type PeerVideoPlayerProps = {
+    userId: string,
     peerUserName: string,
-    peer: Peer.Instance
+    peer: Peer.Instance,
 }
