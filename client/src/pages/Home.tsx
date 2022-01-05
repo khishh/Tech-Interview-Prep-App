@@ -1,23 +1,37 @@
 import { Button, Grid, TextField } from '@mui/material';
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { socket } from '../Socket';
 import { SocketContext } from '../SocketContext';
 import '../index.css';
 
 export const Home = () => {
 
+    const { roomId: _roomId } = useParams();
+
     const { username, setUsername } = useContext(SocketContext);
 
-    const [roomId, setRoom] = useState('');
+    const [roomId, setRoom] = useState(() => _roomId ? _roomId : '');
     const [isCreatingRoom, setisCreatingRoom] = useState(false);
 
     const navigate = useNavigate();
 
-    const codeMirrorRef = useRef<HTMLDivElement>();
-
     console.log(username);
-    
+    console.log(_roomId);
+
+    // const screenShareRef = useRef<HTMLVideoElement | null>(null);
+
+    // navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
+    //     .then(stream => {
+    //         if (screenShareRef.current) {
+    //             screenShareRef.current.srcObject = stream;
+    //         }
+    //     });
+
+    if (!socket.connected) {
+        console.log('reconnecting socket');
+        socket.connect();
+    }
 
     useEffect(() => {
     }, [])
@@ -48,6 +62,8 @@ export const Home = () => {
 
     return (
         <>
+            <h1 className="text-2xl p-3">Online Tech Interview Prep App</h1>
+
             {!isCreatingRoom && <div className="p-2">
                 <TextField id="outlined-basic" label="Room Id" variant="outlined" value={roomId} onChange={event => setRoom(event.target.value)} />
             </div>}
@@ -64,6 +80,11 @@ export const Home = () => {
 
             <Button variant="outlined" onClick={() => setisCreatingRoom(prev => !prev)}>{isCreatingRoom ? 'Join an existing room' : 'Create a new room'}</Button>
 
+
         </>
     )
 }
+
+// type HomeProps = {
+//     roomId? : string
+// }

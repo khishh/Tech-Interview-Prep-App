@@ -10,6 +10,7 @@ import '../index.css';
 
 import CodeMirror from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
+import RoomHeader from "../components/RoomHeader";
 
 export const Room = () => {
 
@@ -18,13 +19,14 @@ export const Room = () => {
     // const { userVideoRef, peerVideoRef, userstream, userId, username: yourname, peers, setPeers, createPeer, addPeer, code, setCode, onUserLeft } = useContext(SocketContext);
     const { userId, username: yourname } = useContext(SocketContext);
 
-
     // const [peers, setPeers] = useState<Peer.Instance[]>([]);
     const [calls, setCalls] = useState<Call[]>([]);
     const [code, setCode] = useState('');
-    const userVideoRef = useRef<HTMLVideoElement>(document.createElement('video'));
+    const [isScreenSharing, setIsScreenSharing] = useState(false);
+    const userVideoRef = useRef<HTMLVideoElement>();
     const peerVideoRef = useRef<PeerVideoRefType[]>([]);
     const userstream = useRef<MediaStream>();
+    const screenShareStream = useRef<MediaStream>();
 
 
     // console.log(`peers size: ${peers.length}`);
@@ -38,7 +40,13 @@ export const Room = () => {
     useEffect(() => {
         navigator.mediaDevices.getUserMedia({ video: true, audio: true })
             .then((stream) => {
-                userVideoRef.current.srcObject = stream;
+
+                /// check track
+                console.log(stream.getVideoTracks().length);
+
+                if (userVideoRef.current) {
+                    userVideoRef.current.srcObject = stream;
+                }
                 userstream.current = stream;
 
                 socket.emit('joinRoom', roomId!, yourname);
@@ -150,8 +158,6 @@ export const Room = () => {
             }
 
             socket.emit('leaveRoom', roomId!, userId);
-            // socket.removeAllListeners();
-            // onDisconnect();
             window.location.href = '/';
         });
 
@@ -222,9 +228,70 @@ export const Room = () => {
         return peer;
     }
 
+    const startScreenShare = () => {
+        setIsScreenSharing(true);
+        navigator.mediaDevices.getDisplayMedia({ video: true })
+            .then(stream => {
+                console.log('user stream track ');
+                console.log(userstream.current?.getVideoTracks()[0]);
+
+                console.log('user stream');
+                console.log(userstream.current);
+                
+                console.log('screen stream track ');
+                console.log(stream.getVideoTracks()[0]);
+
+                console.log('screen stream');
+                console.log(stream);
+
+
+
+                //TODO: if user turns off camera and want to share screen, don't need to replace track? but just add
+                // let userVideoRef recieve stream from user screen
+                if (userVideoRef.current) {
+                    userVideoRef.current.srcObject = stream;
+                }
+
+                // tell peers connected with this user to replace stream
+                calls.forEach(call => {
+                    console.log(userstream.current!.getVideoTracks()[0]);
+
+                    call.peer.replaceTrack(
+                        // might need to check userstream current is not null for sure
+                        userstream.current!.getVideoTracks()[0],
+                        stream.getVideoTracks()[0],
+                        userstream.current!
+                    );
+                });
+
+                stream.getVideoTracks()[0].onended = () => {
+                    endScreenShare();
+
+                    if (userstream.current) {
+                        userVideoRef.current!.srcObject = userstream.current;
+                    }
+
+                    calls.forEach(call => {
+                        call.peer.replaceTrack(
+                            stream.getVideoTracks()[0],
+                            userstream.current!.getVideoTracks()[0],
+                            userstream.current!
+                        );
+                    })
+                }
+            });
+    };
+
+    const endScreenShare = () => {
+        console.log('screen share has ended');
+        setIsScreenSharing(false);
+    }
+
     return (
         <>
+            <RoomHeader startScreenShare={startScreenShare} />
             <h1>{`You are currently in room : ${roomId}`}</h1>
+
             <div style={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
                 <Grid style={{ flex: 1 }} container>
                     <VideoPlayer username={yourname} videoRef={userVideoRef} />

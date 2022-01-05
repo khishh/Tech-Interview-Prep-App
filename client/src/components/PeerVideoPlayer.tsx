@@ -28,12 +28,12 @@ export const PeerVideoPlayer = (props: PeerVideoPlayerProps) => {
     }, [props.userId])
 
     return (
-        // <Paper>
         <Grid item xs={12} md={6}>
-            <Typography style={{ padding: '10' }} variant="h5" gutterBottom>{props.peerUserName || 'Name'}</Typography>
-            <video playsInline muted autoPlay ref={videoRef} />
+            <Paper >
+                <Typography style={{ padding: '10' }} variant="h5" gutterBottom>{props.peerUserName || 'Name'}</Typography>
+                <video playsInline muted autoPlay ref={videoRef} />
+            </Paper>
         </Grid>
-        // </Paper>
     )
 }
 
