@@ -16,23 +16,20 @@ export const Room = () => {
 
     const { roomId } = useParams();
 
-    // const { userVideoRef, peerVideoRef, userstream, userId, username: yourname, peers, setPeers, createPeer, addPeer, code, setCode, onUserLeft } = useContext(SocketContext);
     const { userId, username: yourname } = useContext(SocketContext);
 
-    // const [peers, setPeers] = useState<Peer.Instance[]>([]);
     const [calls, setCalls] = useState<Call[]>([]);
     const [code, setCode] = useState('');
     const [isScreenSharing, setIsScreenSharing] = useState(false);
-    const userVideoRef = useRef<HTMLVideoElement>();
+    const [userAudioStatus, setUserAudioStatus] = useState(true);
+    const [userVideoStatus, setUserVideoStatus] = useState(true);
+    const userVideoRef = useRef<HTMLVideoElement | null>(null);
     const peerVideoRef = useRef<PeerVideoRefType[]>([]);
     const userstream = useRef<MediaStream>();
     const screenShareStream = useRef<MediaStream>();
 
 
-    // console.log(`peers size: ${peers.length}`);
     console.log(`calls size: ${calls.length}`);
-
-    // console.log(peers);
     console.log(calls);
 
 
@@ -71,12 +68,6 @@ export const Room = () => {
                             });
 
                             existingPeer.on('stream', stream => {
-                                // existingCalls.push({ 
-                                //     peername: username, 
-                                //     peeruserId: userId,
-                                //     peer: existingPeer,
-                                //     stream
-                                // });
                                 setCalls((prevCalls) => [...prevCalls, {
                                     peername: username,
                                     peeruserId: userId,
@@ -89,8 +80,7 @@ export const Room = () => {
                         }
 
                     });
-                    // setPeers((prevPeers) => [...prevPeers, ...existingPeers]);
-                    // setCalls((prevCalls) => [...prevCalls, ...existingCalls]);
+    
                 });
 
                 socket.on('callingUser', (callerId, signalData, callerUsername) => {
@@ -103,8 +93,6 @@ export const Room = () => {
                         username: callerUsername,
                         peer: peer
                     });
-
-                    // setPeers((prevPeers) => [...prevPeers, peer]);
 
                     peer.on('stream', stream => {
                         setCalls((prevCalls) => [...prevCalls, {
@@ -131,24 +119,6 @@ export const Room = () => {
                 });
             });
 
-        // socket.on('userLeft', (leftUserId, leftUsername) => {
-        //     console.log(`${leftUsername} has left the room`);
-
-        //     onUserLeft(leftUserId);
-        //     console.log(peers);
-
-        //     const peerRefOfLeftUser = peerVideoRef.current.find((peer: { userId: string; }) => peer.userId === leftUserId);
-        //     if (peerRefOfLeftUser) {
-        //         const remainingPeers = peers.filter((peer) => peer !== peerRefOfLeftUser.peer);
-        //         console.log(remainingPeers);
-
-        //         peerRefOfLeftUser.peer.destroy();
-        //         setPeers(remainingPeers);
-        //         peerVideoRef.current = peerVideoRef.current.filter(peer => peer.userId !== leftUserId);
-
-        //     }
-        // });
-
         window.addEventListener('popstate', (event) => {
             if (userstream.current) {
                 userstream.current.getTracks().forEach(track => {
@@ -169,23 +139,19 @@ export const Room = () => {
 
     // anytime after the number of user in the room changes
     useEffect(() => {
-        // console.log('useEffect: The number of peers changes to ' + peers.length);
         console.log('useEffect: The number of calls changes to ' + calls.length);
 
 
         socket.on('userLeft', (leftUserId, leftUsername) => {
             console.log(`${leftUsername} has left the room`);
-            // console.log(peers);
             console.log(calls);
 
             const peerRefOfLeftUser = peerVideoRef.current.find((peer: { userId: string; }) => peer.userId === leftUserId);
             if (peerRefOfLeftUser) {
-                // const remainingPeers = peers.filter((peer) => peer !== peerRefOfLeftUser.peer);
                 const remainingCalls = calls.filter((call) => call.peeruserId !== leftUserId);
                 console.log(remainingCalls);
 
                 peerRefOfLeftUser.peer.destroy();
-                // setPeers(remainingPeers);
                 setCalls(remainingCalls);
                 peerVideoRef.current = peerVideoRef.current.filter(peer => peer.userId !== leftUserId);
 
@@ -287,15 +253,32 @@ export const Room = () => {
         setIsScreenSharing(false);
     }
 
+    const toggleAudio= () => {
+        setUserAudioStatus(prevMicStatus => {
+            if(userstream.current) {
+                userstream.current.getAudioTracks()[0].enabled = !prevMicStatus
+            }
+            return !prevMicStatus;
+        });
+    }
+
+    const toggleVideo = () => {
+        setUserVideoStatus(prevVideoStatus => {
+            if(userstream.current) {
+                userstream.current.getVideoTracks()[0].enabled = !prevVideoStatus;
+            }
+            return !prevVideoStatus;
+        });
+    }
+
     return (
         <>
-            <RoomHeader startScreenShare={startScreenShare} />
+            <RoomHeader startScreenShare={startScreenShare} userAudioStatus={userAudioStatus} userVideoStatus={userVideoStatus} toggleUserAudio={toggleAudio} toggleUserVideo={toggleVideo}/>
             <h1>{`You are currently in room : ${roomId}`}</h1>
 
             <div style={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
                 <Grid style={{ flex: 1 }} container>
-                    <VideoPlayer username={yourname} videoRef={userVideoRef} />
-                    {/* {peers.map(peer => <PeerVideoPlayer userId="userId" peerUserName="user2" peer={peer} />)} */}
+                    <VideoPlayer username={yourname} videoRef={userVideoRef}/>
                     {calls.map(call => <PeerVideoPlayer key={call.peeruserId} userId={call.peeruserId} peerUserName={call.peername} peer={call.peer} stream={call.stream} />)}
                 </Grid>
                 <div style={{ flex: 1 }}>

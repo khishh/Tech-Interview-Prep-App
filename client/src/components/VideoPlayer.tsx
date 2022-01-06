@@ -10,7 +10,7 @@ export const VideoPlayer = (props: Props) => {
         <Grid item xs={12} md={6}>
             <Paper>
                 <Typography align="center" variant="h5" gutterBottom>{props.username || 'Name'}</Typography>
-                <video playsInline muted autoPlay ref={props.videoRef} />
+                <video playsInline autoPlay ref={props.videoRef} />
             </Paper>
 
         </Grid>
@@ -20,5 +20,5 @@ export const VideoPlayer = (props: Props) => {
 
 type Props = {
     username: string
-    videoRef: any
+    videoRef: React.MutableRefObject<HTMLVideoElement | null>
 }
