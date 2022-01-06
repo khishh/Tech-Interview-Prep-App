@@ -120,15 +120,7 @@ export const Room = () => {
             });
 
         window.addEventListener('popstate', (event) => {
-            if (userstream.current) {
-                userstream.current.getTracks().forEach(track => {
-                    console.log(`${track.kind} is stopping...`);
-                    track.stop();
-                });
-            }
-
-            socket.emit('leaveRoom', roomId!, userId);
-            window.location.href = '/';
+            leaveRoom();
         });
 
         return () => {
@@ -271,9 +263,21 @@ export const Room = () => {
         });
     }
 
+    const leaveRoom = () => {
+        if (userstream.current) {
+            userstream.current.getTracks().forEach(track => {
+                console.log(`${track.kind} is stopping...`);
+                track.stop();
+            });
+        }
+
+        socket.emit('leaveRoom', roomId!, userId);
+        window.location.href = '/';
+    }
+
     return (
         <>
-            <RoomHeader startScreenShare={startScreenShare} userAudioStatus={userAudioStatus} userVideoStatus={userVideoStatus} toggleUserAudio={toggleAudio} toggleUserVideo={toggleVideo}/>
+            <RoomHeader startScreenShare={startScreenShare} userAudioStatus={userAudioStatus} userVideoStatus={userVideoStatus} toggleUserAudio={toggleAudio} toggleUserVideo={toggleVideo} leaveRoom={leaveRoom}/>
             <h1>{`You are currently in room : ${roomId}`}</h1>
 
             <div style={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
