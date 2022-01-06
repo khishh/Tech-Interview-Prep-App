@@ -27,9 +27,17 @@ export const ScreenShareTest = () => {
         setisScreenSharing(false);
     }
 
+    const toggleAudio = () => {
+        console.log('toggle audio');
+    }
+
+    const toggleVideo = () => {
+        console.log('toggle video');
+    }
+
     return (
         <div>
-            <RoomHeader startScreenShare={startScreenShare}/>
+            <RoomHeader startScreenShare={startScreenShare} userAudioStatus={true} userVideoStatus={true} toggleUserAudio={toggleAudio} toggleUserVideo={toggleVideo}/>
             {   
                 isScreenSharing && 
                 <video playsInline autoPlay ref={screenShareRef} />

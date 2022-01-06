@@ -1,4 +1,4 @@
-import { AppBar, Box, Button, Container, IconButton, Link, Menu, Toolbar, Typography } from '@mui/material';
+import { AppBar, Box, Button, Toolbar, Typography } from '@mui/material';
 import React from 'react';
 
 const RoomHeader = (props: RoomHeaderProps) => {
@@ -9,7 +9,13 @@ const RoomHeader = (props: RoomHeaderProps) => {
                     <Typography>
                         Tech Interview Online App
                     </Typography>
-                    <Button style={{ color: 'white' }} onClick={props.startScreenShare}>Screen Record</Button>
+                    <Button style={{ color: 'white' }} onClick={props.startScreenShare}>Screen Share</Button>
+                    <Button style={{ color: 'white' }} onClick={props.toggleUserAudio}>
+                        { props.userAudioStatus ? "Mute" : "UnMute"}
+                    </Button>
+                    <Button style={{ color: 'white' }} onClick={props.toggleUserVideo}>
+                        { props.userVideoStatus ? "Turn Off Camera" : "Turn On Camara"}
+                    </Button>
                 </Toolbar>
             </AppBar>
         </Box>
@@ -17,7 +23,11 @@ const RoomHeader = (props: RoomHeaderProps) => {
 }
 
 type RoomHeaderProps = {
-    startScreenShare: () => void;
+    startScreenShare: () => void
+    userAudioStatus: boolean
+    userVideoStatus: boolean
+    toggleUserAudio: () => void
+    toggleUserVideo: () => void
 }
 
 export default RoomHeader;
