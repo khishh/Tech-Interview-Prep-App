@@ -11,14 +11,16 @@ export const VideoPlayer = (props: Props) => {
             <Paper>
                 <Typography align="center" variant="h5" gutterBottom>{props.username || 'Name'}</Typography>
                 <video playsInline autoPlay ref={props.videoRef} />
+                {/* temporary fullscreen */}
+                <button onClick={() => props.requestFullScreenMode(props.videoRef.current!)}>FullScreen</button>
             </Paper>
 
         </Grid>
-        // </Paper>
     )
 };
 
 type Props = {
     username: string
     videoRef: React.MutableRefObject<HTMLVideoElement | null>
+    requestFullScreenMode: (element: HTMLElement) => void
 }

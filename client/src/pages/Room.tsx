@@ -80,7 +80,7 @@ export const Room = () => {
                         }
 
                     });
-    
+
                 });
 
                 socket.on('callingUser', (callerId, signalData, callerUsername) => {
@@ -195,7 +195,7 @@ export const Room = () => {
 
                 console.log('user stream');
                 console.log(userstream.current);
-                
+
                 console.log('screen stream track ');
                 console.log(stream.getVideoTracks()[0]);
 
@@ -245,9 +245,9 @@ export const Room = () => {
         setIsScreenSharing(false);
     }
 
-    const toggleAudio= () => {
+    const toggleAudio = () => {
         setUserAudioStatus(prevMicStatus => {
-            if(userstream.current) {
+            if (userstream.current) {
                 userstream.current.getAudioTracks()[0].enabled = !prevMicStatus
             }
             return !prevMicStatus;
@@ -256,7 +256,7 @@ export const Room = () => {
 
     const toggleVideo = () => {
         setUserVideoStatus(prevVideoStatus => {
-            if(userstream.current) {
+            if (userstream.current) {
                 userstream.current.getVideoTracks()[0].enabled = !prevVideoStatus;
             }
             return !prevVideoStatus;
@@ -275,15 +275,21 @@ export const Room = () => {
         window.location.href = '/';
     }
 
+    const requestFullScreen = (element: HTMLElement) => {
+        element.requestFullscreen()
+            .then(res => console.log('full screen mode'))
+            .catch(err => console.log('failed to open in full screen mode: ' + err));
+    }
+
     return (
         <>
-            <RoomHeader startScreenShare={startScreenShare} userAudioStatus={userAudioStatus} userVideoStatus={userVideoStatus} toggleUserAudio={toggleAudio} toggleUserVideo={toggleVideo} leaveRoom={leaveRoom}/>
+            <RoomHeader startScreenShare={startScreenShare} userAudioStatus={userAudioStatus} userVideoStatus={userVideoStatus} toggleUserAudio={toggleAudio} toggleUserVideo={toggleVideo} leaveRoom={leaveRoom} />
             <h1>{`You are currently in room : ${roomId}`}</h1>
 
             <div style={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
                 <Grid style={{ flex: 1 }} container>
-                    <VideoPlayer username={yourname} videoRef={userVideoRef}/>
-                    {calls.map(call => <PeerVideoPlayer key={call.peeruserId} userId={call.peeruserId} peerUserName={call.peername} peer={call.peer} stream={call.stream} />)}
+                    <VideoPlayer username={yourname} videoRef={userVideoRef} requestFullScreenMode={requestFullScreen}/>
+                    {calls.map(call => <PeerVideoPlayer key={call.peeruserId} userId={call.peeruserId} peerUserName={call.peername} peer={call.peer} stream={call.stream} requestFullScreenMode={requestFullScreen}/>)}
                 </Grid>
                 <div style={{ flex: 1 }}>
                     <CodeMirror
