@@ -16,6 +16,7 @@ const RoomHeader = (props: RoomHeaderProps) => {
                     <Button style={{ color: 'white' }} onClick={props.toggleUserVideo}>
                         { props.userVideoStatus ? "Turn Off Camera" : "Turn On Camara"}
                     </Button>
+                    <Button style={{ color: 'white' }} onClick={props.leaveRoom}>Leave Room</Button>
                 </Toolbar>
             </AppBar>
         </Box>
@@ -28,6 +29,7 @@ type RoomHeaderProps = {
     userVideoStatus: boolean
     toggleUserAudio: () => void
     toggleUserVideo: () => void
+    leaveRoom: () => void
 }
 
 export default RoomHeader;
