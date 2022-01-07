@@ -39,9 +39,13 @@ export const ScreenShareTest = () => {
         console.log('leave room'); 
     }
 
+    const startRecordingScreen = () => {
+        console.log('start recording screen');
+    }
+
     return (
         <div>
-            <RoomHeader startScreenShare={startScreenShare} userAudioStatus={true} userVideoStatus={true} toggleUserAudio={toggleAudio} toggleUserVideo={toggleVideo} leaveRoom={leaveRoom}/>
+            {/* <RoomHeader startScreenShare={startScreenShare} userAudioStatus={true} userVideoStatus={true} toggleUserAudio={toggleAudio} toggleUserVideo={toggleVideo} leaveRoom={leaveRoom} startRecordingScreen={startRecordingScreen}/> */}
             {   
                 isScreenSharing && 
                 <video playsInline autoPlay ref={screenShareRef} />

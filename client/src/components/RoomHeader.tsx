@@ -10,11 +10,14 @@ const RoomHeader = (props: RoomHeaderProps) => {
                         Tech Interview Online App
                     </Typography>
                     <Button style={{ color: 'white' }} onClick={props.startScreenShare}>Screen Share</Button>
+                    <Button style={{ color: 'white' }} onClick={props.isScreenRecording ? props.endRecordingScreen : props.startRecordingScreen}>
+                        {props.isScreenRecording ? "Stop Recording" : "Start Recording"}
+                    </Button>
                     <Button style={{ color: 'white' }} onClick={props.toggleUserAudio}>
-                        { props.userAudioStatus ? "Mute" : "UnMute"}
+                        {props.userAudioStatus ? "Mute" : "UnMute"}
                     </Button>
                     <Button style={{ color: 'white' }} onClick={props.toggleUserVideo}>
-                        { props.userVideoStatus ? "Turn Off Camera" : "Turn On Camara"}
+                        {props.userVideoStatus ? "Turn Off Camera" : "Turn On Camara"}
                     </Button>
                     <Button style={{ color: 'white' }} onClick={props.leaveRoom}>Leave Room</Button>
                 </Toolbar>
@@ -30,6 +33,9 @@ type RoomHeaderProps = {
     toggleUserAudio: () => void
     toggleUserVideo: () => void
     leaveRoom: () => void
+    isScreenRecording: boolean
+    startRecordingScreen: () => void
+    endRecordingScreen: () => void
 }
 
 export default RoomHeader;
