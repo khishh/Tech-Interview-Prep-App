@@ -31,6 +31,7 @@ export const Room = () => {
     const screenShareStream = useRef<MediaStream>();
     const mediaRecorderRef = useRef<MediaRecorder>();
 
+    const audioContext = new AudioContext();
 
     console.log(`calls size: ${calls.length}`);
     console.log(calls);
@@ -71,6 +72,10 @@ export const Room = () => {
                             });
 
                             existingPeer.on('stream', stream => {
+                                console.log('stream from ' + username);
+                                console.log(stream.getAudioTracks());
+                                
+                                
                                 setCalls((prevCalls) => [...prevCalls, {
                                     peername: username,
                                     peeruserId: userId,
@@ -98,6 +103,8 @@ export const Room = () => {
                     });
 
                     peer.on('stream', stream => {
+                        console.log('stream from ' + callerUsername);
+                                console.log(stream.getAudioTracks());
                         setCalls((prevCalls) => [...prevCalls, {
                             peeruserId: callerId,
                             peername: callerUsername,
@@ -248,23 +255,46 @@ export const Room = () => {
 
             let recordedChunks: Blob[] = [];
 
-            navigator.mediaDevices.getDisplayMedia({ video: true })
+            navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
                 .then(stream => {
+
+                    console.log(stream.getTracks());
+                    
+                    const dest= audioContext.createMediaStreamDestination();
 
                     const peerAudioTracks = calls.reduce((prevVal, curVal) =>
                         [...prevVal, ...curVal.stream.getAudioTracks()]
                         , [] as MediaStreamTrack[]);
+                    
+                    const allAudioTracks = [...userstream.current!.getAudioTracks(), ...peerAudioTracks];
+                    
+                    allAudioTracks.forEach(track => {
+                        const audioMediaStream = new MediaStream([track]);
+                        const audioMediaStreamSource = audioContext.createMediaStreamSource(audioMediaStream);
+                        audioMediaStreamSource.connect(dest);
+                    });
 
-                    const streamWithAudio = new MediaStream([...stream.getTracks(), ...userstream.current!.getAudioTracks(), ...peerAudioTracks]);
+                    stream.getAudioTracks().forEach(audioTrack => {
+                        const audioMediaStream = new MediaStream([audioTrack]);
+                        const audioMediaStreamSource = audioContext.createMediaStreamSource(audioMediaStream);
+                        audioMediaStreamSource.connect(dest);
+                    });
 
-                    userScreenRecordingStream.current = streamWithAudio;
+                    const finalScreenStream = dest.stream;
 
-                    streamWithAudio.getVideoTracks()[0].onended = () => {
+                    // add video track from display media
+                    finalScreenStream.addTrack(stream.getVideoTracks()[0]);
+
+                    console.log(finalScreenStream);
+
+                    userScreenRecordingStream.current = finalScreenStream;
+
+                    finalScreenStream.getVideoTracks()[0].onended = () => {
                         console.log('screen record track is abt to stop...');
                         endRecordingScreen();
                     }
 
-                    mediaRecorderRef.current = new MediaRecorder(streamWithAudio);
+                    mediaRecorderRef.current = new MediaRecorder(finalScreenStream);
 
                     mediaRecorderRef.current.ondataavailable = event => {
                         if (event.data.size > 0) {
