@@ -21,12 +21,15 @@ export const Room = () => {
     const [calls, setCalls] = useState<Call[]>([]);
     const [code, setCode] = useState('');
     const [isScreenSharing, setIsScreenSharing] = useState(false);
+    const [isScreenRecording, setIsScreenRecording] = useState(false);
     const [userAudioStatus, setUserAudioStatus] = useState(true);
     const [userVideoStatus, setUserVideoStatus] = useState(true);
     const userVideoRef = useRef<HTMLVideoElement | null>(null);
     const peerVideoRef = useRef<PeerVideoRefType[]>([]);
     const userstream = useRef<MediaStream>();
+    const userScreenRecordingStream = useRef<MediaStream>();
     const screenShareStream = useRef<MediaStream>();
+    const mediaRecorderRef = useRef<MediaRecorder>();
 
 
     console.log(`calls size: ${calls.length}`);
@@ -240,6 +243,82 @@ export const Room = () => {
             });
     };
 
+    const startRecordingScreen = () => {
+        if (navigator.mediaDevices && userstream.current) {
+
+            let recordedChunks: Blob[] = [];
+
+            navigator.mediaDevices.getDisplayMedia({ video: true })
+                .then(stream => {
+
+                    const peerAudioTracks = calls.reduce((prevVal, curVal) =>
+                        [...prevVal, ...curVal.stream.getAudioTracks()]
+                        , [] as MediaStreamTrack[]);
+
+                    const streamWithAudio = new MediaStream([...stream.getTracks(), ...userstream.current!.getAudioTracks(), ...peerAudioTracks]);
+
+                    userScreenRecordingStream.current = streamWithAudio;
+
+                    streamWithAudio.getVideoTracks()[0].onended = () => {
+                        console.log('screen record track is abt to stop...');
+                        endRecordingScreen();
+                    }
+
+                    mediaRecorderRef.current = new MediaRecorder(streamWithAudio);
+
+                    mediaRecorderRef.current.ondataavailable = event => {
+                        if (event.data.size > 0) {
+                            recordedChunks.push(event.data);
+                        }
+                    }
+
+                    mediaRecorderRef.current.onstop = event => {
+                        console.log('mediaRecorder onStopped called');
+                        mediaRecorderRef.current = undefined;
+
+                        const blob = new Blob(recordedChunks, {
+                            type: recordedChunks[0].type
+                        });
+                        recordedChunks = [];
+                        const url = URL.createObjectURL(blob);
+
+                        let recordName = prompt('Please enter the name of your recording. Otherwise, the name will be a current time.');
+
+                        if(!recordName) {
+                            recordName = new Date().toUTCString();
+                        }
+
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = recordName;
+                        link.click();
+                    }
+
+                    console.log('mediaRecorder onStart called');
+                    mediaRecorderRef.current.start();
+
+                    setIsScreenRecording(true);
+                });
+        }
+    }
+
+    const endRecordingScreen = () => {
+        console.log('endRecordingScreen called');
+        console.log(mediaRecorderRef.current);
+
+        if(userScreenRecordingStream.current) {
+            userScreenRecordingStream.current.getTracks().forEach(track => {
+                track.stop();
+            });
+        }
+        
+        if (mediaRecorderRef.current) {
+            console.log('mediaRecorder onStart called');
+            mediaRecorderRef.current.stop();
+            setIsScreenRecording(false);
+        }
+    }
+
     const endScreenShare = () => {
         console.log('screen share has ended');
         setIsScreenSharing(false);
@@ -283,13 +362,23 @@ export const Room = () => {
 
     return (
         <>
-            <RoomHeader startScreenShare={startScreenShare} userAudioStatus={userAudioStatus} userVideoStatus={userVideoStatus} toggleUserAudio={toggleAudio} toggleUserVideo={toggleVideo} leaveRoom={leaveRoom} />
+            <RoomHeader
+                startScreenShare={startScreenShare}
+                userAudioStatus={userAudioStatus}
+                userVideoStatus={userVideoStatus}
+                toggleUserAudio={toggleAudio}
+                toggleUserVideo={toggleVideo}
+                leaveRoom={leaveRoom}
+                isScreenRecording={isScreenRecording}
+                startRecordingScreen={startRecordingScreen}
+                endRecordingScreen={endRecordingScreen}
+            />
             <h1>{`You are currently in room : ${roomId}`}</h1>
 
             <div style={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
                 <Grid style={{ flex: 1 }} container>
-                    <VideoPlayer username={yourname} videoRef={userVideoRef} requestFullScreenMode={requestFullScreen}/>
-                    {calls.map(call => <PeerVideoPlayer key={call.peeruserId} userId={call.peeruserId} peerUserName={call.peername} peer={call.peer} stream={call.stream} requestFullScreenMode={requestFullScreen}/>)}
+                    <VideoPlayer username={yourname} videoRef={userVideoRef} requestFullScreenMode={requestFullScreen} />
+                    {calls.map(call => <PeerVideoPlayer key={call.peeruserId} userId={call.peeruserId} peerUserName={call.peername} peer={call.peer} stream={call.stream} requestFullScreenMode={requestFullScreen} />)}
                 </Grid>
                 <div style={{ flex: 1 }}>
                     <CodeMirror
