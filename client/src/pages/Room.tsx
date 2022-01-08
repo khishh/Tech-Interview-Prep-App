@@ -5,13 +5,15 @@ import { socket } from "../Socket";
 import { PeerVideoRefType, SocketContext } from "../SocketContext";
 import Peer from 'simple-peer';
 import { PeerVideoPlayer } from "../components/PeerVideoPlayer";
-import { Grid } from "@mui/material";
+import { Grid, Typography } from "@mui/material";
 import '../index.css';
 
 import CodeMirror from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import RoomHeader from "../components/RoomHeader";
 import Footer from "../components/Footer";
+import { minHeight } from "@mui/system";
+import SocialMediaShare from "../components/SocialMediaShare";
 
 export const Room = () => {
 
@@ -392,7 +394,7 @@ export const Room = () => {
     }
 
     return (
-        <div>
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <RoomHeader
                 startScreenShare={startScreenShare}
                 userAudioStatus={userAudioStatus}
@@ -404,7 +406,7 @@ export const Room = () => {
                 startRecordingScreen={startRecordingScreen}
                 endRecordingScreen={endRecordingScreen}
             />
-            <div style={{ width: '100vw', padding: "64px 0 0" }}>
+            <div style={{ flex: 1, width: '100vw', padding: "64px 0 0" }}>
                 {/* <h1>{`You are currently in room : ${roomId}`}</h1> */}
 
                 <div style={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
@@ -412,18 +414,29 @@ export const Room = () => {
                         <VideoPlayer username={yourname} videoRef={userVideoRef} requestFullScreenMode={requestFullScreen} />
                         {calls.map(call => <PeerVideoPlayer key={call.peeruserId} userId={call.peeruserId} peerUserName={call.peername} peer={call.peer} stream={call.stream} requestFullScreenMode={requestFullScreen} />)}
                     </Grid>
-                    <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
                         <CodeMirror
                             value={code}
                             width='100%'
                             maxWidth="50vw"
-                            height="200vh"
+                            minHeight="80vh"
+                            maxHeight="80vh"
+                            height="80vh"
+                            // style={{
+                            //     flexGrow: 5,
+                            // }}
                             extensions={[javascript({ jsx: true })]}
                             onChange={(value, viewUpdate) => {
                                 console.log('value:', value);
                                 socket.emit('codeChanged', roomId!, value);
                             }}
                         />
+                        <div style={{
+                            flex: 1,
+                            // flexGrow: 1,
+                        }}>
+                            <SocialMediaShare roomId={roomId ? roomId : ''}/>
+                        </div>
                     </div>
                 </div>
             </div>

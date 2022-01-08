@@ -10,10 +10,11 @@ import FaceRetouchingOffIcon from '@mui/icons-material/FaceRetouchingOff';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import React from 'react';
 import { margin } from '@mui/system';
+import '../index.css';
 
 const RoomHeader = (props: RoomHeaderProps) => {
     return (
-        <AppBar position='fixed'>
+        <AppBar position='fixed' >
             <Toolbar>
                 <Typography>
                     Tech Interview Online App
