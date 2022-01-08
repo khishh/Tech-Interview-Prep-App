@@ -1,3 +1,4 @@
+require('dotenv').config()
 import express from 'express';
 import { Server } from 'socket.io';
 import http from 'http';
@@ -28,6 +29,9 @@ type RoomInfoType = {
 const roomInfo: Map<string, RoomInfoType> = new Map<string, RoomInfoType>();
 
 const userInfo: Map<string, UserInfoType> = new Map<string, UserInfoType>();
+
+console.log(process.env.NODE_ENV);
+
 
 if(process.env.NODE_ENV === 'production') {
 
