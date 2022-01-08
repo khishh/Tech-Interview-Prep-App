@@ -5,12 +5,15 @@ import { socket } from "../Socket";
 import { PeerVideoRefType, SocketContext } from "../SocketContext";
 import Peer from 'simple-peer';
 import { PeerVideoPlayer } from "../components/PeerVideoPlayer";
-import { Grid } from "@mui/material";
+import { Grid, Typography } from "@mui/material";
 import '../index.css';
 
 import CodeMirror from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import RoomHeader from "../components/RoomHeader";
+import Footer from "../components/Footer";
+import { minHeight } from "@mui/system";
+import SocialMediaShare from "../components/SocialMediaShare";
 
 export const Room = () => {
 
@@ -74,8 +77,8 @@ export const Room = () => {
                             existingPeer.on('stream', stream => {
                                 console.log('stream from ' + username);
                                 console.log(stream.getAudioTracks());
-                                
-                                
+
+
                                 setCalls((prevCalls) => [...prevCalls, {
                                     peername: username,
                                     peeruserId: userId,
@@ -104,7 +107,7 @@ export const Room = () => {
 
                     peer.on('stream', stream => {
                         console.log('stream from ' + callerUsername);
-                                console.log(stream.getAudioTracks());
+                        console.log(stream.getAudioTracks());
                         setCalls((prevCalls) => [...prevCalls, {
                             peeruserId: callerId,
                             peername: callerUsername,
@@ -259,15 +262,15 @@ export const Room = () => {
                 .then(stream => {
 
                     console.log(stream.getTracks());
-                    
-                    const dest= audioContext.createMediaStreamDestination();
+
+                    const dest = audioContext.createMediaStreamDestination();
 
                     const peerAudioTracks = calls.reduce((prevVal, curVal) =>
                         [...prevVal, ...curVal.stream.getAudioTracks()]
                         , [] as MediaStreamTrack[]);
-                    
+
                     const allAudioTracks = [...userstream.current!.getAudioTracks(), ...peerAudioTracks];
-                    
+
                     allAudioTracks.forEach(track => {
                         const audioMediaStream = new MediaStream([track]);
                         const audioMediaStreamSource = audioContext.createMediaStreamSource(audioMediaStream);
@@ -314,7 +317,7 @@ export const Room = () => {
 
                         let recordName = prompt('Please enter the name of your recording. Otherwise, the name will be a current time.');
 
-                        if(!recordName) {
+                        if (!recordName) {
                             recordName = new Date().toUTCString();
                         }
 
@@ -336,12 +339,12 @@ export const Room = () => {
         console.log('endRecordingScreen called');
         console.log(mediaRecorderRef.current);
 
-        if(userScreenRecordingStream.current) {
+        if (userScreenRecordingStream.current) {
             userScreenRecordingStream.current.getTracks().forEach(track => {
                 track.stop();
             });
         }
-        
+
         if (mediaRecorderRef.current) {
             console.log('mediaRecorder onStart called');
             mediaRecorderRef.current.stop();
@@ -391,7 +394,7 @@ export const Room = () => {
     }
 
     return (
-        <>
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <RoomHeader
                 startScreenShare={startScreenShare}
                 userAudioStatus={userAudioStatus}
@@ -403,28 +406,43 @@ export const Room = () => {
                 startRecordingScreen={startRecordingScreen}
                 endRecordingScreen={endRecordingScreen}
             />
-            <h1>{`You are currently in room : ${roomId}`}</h1>
+            <div style={{ flex: 1, width: '100vw', padding: "64px 0 0" }}>
+                {/* <h1>{`You are currently in room : ${roomId}`}</h1> */}
 
-            <div style={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
-                <Grid style={{ flex: 1 }} container>
-                    <VideoPlayer username={yourname} videoRef={userVideoRef} requestFullScreenMode={requestFullScreen} />
-                    {calls.map(call => <PeerVideoPlayer key={call.peeruserId} userId={call.peeruserId} peerUserName={call.peername} peer={call.peer} stream={call.stream} requestFullScreenMode={requestFullScreen} />)}
-                </Grid>
-                <div style={{ flex: 1 }}>
-                    <CodeMirror
-                        value={code}
-                        width='100%'
-                        height="500px"
-                        extensions={[javascript({ jsx: true })]}
-                        onChange={(value, viewUpdate) => {
-                            console.log('value:', value);
-                            socket.emit('codeChanged', roomId!, value);
-                        }}
-                    />
+                <div style={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
+                    <Grid style={{ flex: 1 }} container>
+                        <VideoPlayer username={yourname} videoRef={userVideoRef} requestFullScreenMode={requestFullScreen} />
+                        {calls.map(call => <PeerVideoPlayer key={call.peeruserId} userId={call.peeruserId} peerUserName={call.peername} peer={call.peer} stream={call.stream} requestFullScreenMode={requestFullScreen} />)}
+                    </Grid>
+                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                        <CodeMirror
+                            value={code}
+                            width='100%'
+                            maxWidth="50vw"
+                            minHeight="80vh"
+                            maxHeight="80vh"
+                            height="80vh"
+                            // style={{
+                            //     flexGrow: 5,
+                            // }}
+                            extensions={[javascript({ jsx: true })]}
+                            onChange={(value, viewUpdate) => {
+                                console.log('value:', value);
+                                socket.emit('codeChanged', roomId!, value);
+                            }}
+                        />
+                        <div style={{
+                            flex: 1,
+                            // flexGrow: 1,
+                        }}>
+                            <SocialMediaShare roomId={roomId ? roomId : ''}/>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-        </>
+            <Footer />
+        </div>
     )
 }
 

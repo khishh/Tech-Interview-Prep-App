@@ -20,11 +20,15 @@ export const PeerVideoPlayer = (props: PeerVideoPlayerProps) => {
 
     return (
         <Grid item xs={12} md={6}>
-            <Paper >
-                <Typography style={{ padding: '10' }} variant="h5" gutterBottom>{props.peerUserName || 'Name'}</Typography>
+            <Paper className='videocall'>
+                {/* <Typography style={{ padding: '10' }} variant="h5" gutterBottom>{props.peerUserName || 'Name'}</Typography> */}
                 <video playsInline autoPlay ref={videoRef} />
+                <div className="overlay">
+                    <div>{props.peerUserName}</div>
+                    <Button variant="contained" onClick={() => props.requestFullScreenMode(videoRef.current!)}>View FullScreen</Button>
+                </div>
                 {/* temporary fullscreen */}
-                <button onClick={() => props.requestFullScreenMode(videoRef.current!)}>FullScreen</button>
+                
             </Paper>
         </Grid>
     )
