@@ -30,13 +30,12 @@ const port = process.env.PORT || 8080;
 const roomInfo = new Map();
 const userInfo = new Map();
 console.log(process.env.NODE_ENV);
-// if(process.env.NODE_ENV === 'production') {
-app.use(express_1.default.static(path_1.default.join(__dirname, "client", "build")));
-app.get("*", (req, res) => {
-    res.sendFile(path_1.default.join(__dirname, "client", "build", "index.html"));
-});
-// }
-console.log(__dirname);
+if (process.env.NODE_ENV === 'production') {
+    app.use(express_1.default.static(path_1.default.join(__dirname, "client", "build")));
+    app.get("*", (req, res) => {
+        res.sendFile(path_1.default.join(__dirname, "client", "build", "index.html"));
+    });
+}
 io.on("connection", (socket) => {
     console.log(socket.id);
     socket.emit('me', socket.id);

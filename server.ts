@@ -33,7 +33,7 @@ const userInfo: Map<string, UserInfoType> = new Map<string, UserInfoType>();
 console.log(process.env.NODE_ENV);
 
 
-// if(process.env.NODE_ENV === 'production') {
+if(process.env.NODE_ENV === 'production') {
 
     app.use(express.static(path.join(__dirname, "client", "build")))
 
@@ -41,11 +41,8 @@ console.log(process.env.NODE_ENV);
         res.sendFile(path.join(__dirname, "client", "build", "index.html"));
     });
 
-// }
+}
 
-
-
-console.log(__dirname);
 
 io.on("connection", (socket) => {
     console.log(socket.id);

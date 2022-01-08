@@ -12,7 +12,8 @@ import {
 } from "react-share";
 
 const SocialMediaShare = (props: SocialMediaShareProps) => {
-    const shareUrl = `http://localhost:3000/${props.roomId}`;
+    const endpoint = process.env.NODE_ENV === 'production' ? 'https://tech-interview-prep-app.herokuapp.com/' : 'http://localhost:8080/';
+    const shareUrl = `${endpoint}${props.roomId}`;
 
     return (
         <div>
