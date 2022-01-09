@@ -1,0 +1,46 @@
+
+In root ts.config.json 
+1. add "outDir": "dist" inside compilerOptions tag
+2. add "exclude": ["client", "node_modules", "public"] after compilerOptions in order to ignore react app during "npm i --production"
+
+In servers' package.json 
+1. add scripts like below"
+"scripts": {
+    "serve": "nodemon server.ts",
+    "install-client": "cd client && npm install", // install all deps for react app
+    "client-build": "cd client && npm run build", // build production ready code. This will generate build dir conatining static html/css/js ready for browsers.
+    "server": "nodemon dist/server.js", // After "npm i --production", production ready js files will be saved inside "outDir" given in ts.config.json.
+    "develop": "concurrently --kill-others-on-fail \"npm run server\" \"npm run start --prefix client\"", // for development use
+    "start": "node dist/server.js", // a default command called if ProcFile is missing
+    "heroku-postbuild": "npm run install-client && npm run build", // build command called by heroku
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "tsc" // necessary for typescript
+},
+
+2. specify node engine
+"engines": {
+    "node": "16.13.1"
+},
+
+In clients' package.json 
+1. add "proxy": "http://localhost:8080". This will allow requests from clients to proxy.
+ref: https://www.freecodecamp.org/news/deploying-a-mern-application-using-mongodb-atlas-to-heroku/
+
+run "cd client && npm run build" to generate build dir.
+
+Once client/build dir and dist is generated, move client/build inside dist dir.
+So that dist dir have all codes necessary for this projects with only html/css/js.
+
+Make Procfile.
+ex). web: node dist/server.js
+
+heroku
+1. "heroku login" and then "heroku create"
+2. make sure the repo is git enabled and commit changes.
+3. run "heroku local -p <PORT-NUMBER>" to test everything will be working fine on heroku.
+4. run "git push heroku master" from master branch
+
+
+reference:
+https://www.youtube.com/watch?v=5PaUiPyBDJY
+https://www.freecodecamp.org/news/deploying-a-mern-application-using-mongodb-atlas-to-heroku/
