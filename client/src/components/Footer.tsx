@@ -5,12 +5,11 @@ const Footer = () => {
     return (
         <div
         style={{ 
-            bottom: 0,
             width: "100vw",
             padding: "1rem",
             background: '#2196f3'
         }}>
-            <Typography  textAlign='center' color="white">Developed by khishh💻</Typography>
+            <Typography  textAlign='center' color="white">Developed by Kodai Hiraishi</Typography>
         </div>
     )
 }

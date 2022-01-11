@@ -1,19 +1,19 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { VideoPlayer } from "../components/VideoPlayer";
 import { socket } from "../Socket";
 import { PeerVideoRefType, SocketContext } from "../SocketContext";
 import Peer from 'simple-peer';
 import { PeerVideoPlayer } from "../components/PeerVideoPlayer";
-import { Grid, Typography } from "@mui/material";
+import { Grid } from "@mui/material";
 import '../index.css';
 
-import CodeMirror from '@uiw/react-codemirror';
+import CodeMirror, { ViewUpdate } from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import RoomHeader from "../components/RoomHeader";
 import Footer from "../components/Footer";
-import { minHeight } from "@mui/system";
 import SocialMediaShare from "../components/SocialMediaShare";
+import _ from 'lodash';
 
 export const Room = () => {
 
@@ -34,11 +34,17 @@ export const Room = () => {
     const screenShareStream = useRef<MediaStream>();
     const mediaRecorderRef = useRef<MediaRecorder>();
 
+
+    const emitCodeChanged = (value: string, viewUpdate: ViewUpdate) => {
+        socket.emit('codeChanged', roomId!, value);
+    }
+
+    const debounceCodeChangeHandler = useCallback(
+        _.debounce(emitCodeChanged, 200),
+        [],
+    )
+
     const audioContext = new AudioContext();
-
-    console.log(`calls size: ${calls.length}`);
-    console.log(calls);
-
 
     // only once afte mounted
     useEffect(() => {
@@ -46,8 +52,6 @@ export const Room = () => {
             .then((stream) => {
 
                 /// check track
-                console.log(stream.getVideoTracks().length);
-
                 if (userVideoRef.current) {
                     userVideoRef.current.srcObject = stream;
                 }
@@ -58,12 +62,7 @@ export const Room = () => {
 
                 socket.on('newUserJoined', usersInTheRoom => {
 
-                    console.log(`${yourname}: you received a list of users in the room trying to join`);
-                    console.log(usersInTheRoom);
-
-
                     const existingPeers: Peer.Instance[] = [];
-                    const existingCalls: Call[] = [];
                     usersInTheRoom.forEach(({ userId, username }) => {
                         if (userId !== socket.id) {
                             const existingPeer = createPeer(userId, socket.id, stream);
@@ -75,9 +74,6 @@ export const Room = () => {
                             });
 
                             existingPeer.on('stream', stream => {
-                                console.log('stream from ' + username);
-                                console.log(stream.getAudioTracks());
-
 
                                 setCalls((prevCalls) => [...prevCalls, {
                                     peername: username,
@@ -106,8 +102,6 @@ export const Room = () => {
                     });
 
                     peer.on('stream', stream => {
-                        console.log('stream from ' + callerUsername);
-                        console.log(stream.getAudioTracks());
                         setCalls((prevCalls) => [...prevCalls, {
                             peeruserId: callerId,
                             peername: callerUsername,
@@ -149,12 +143,10 @@ export const Room = () => {
 
         socket.on('userLeft', (leftUserId, leftUsername) => {
             console.log(`${leftUsername} has left the room`);
-            console.log(calls);
 
             const peerRefOfLeftUser = peerVideoRef.current.find((peer: { userId: string; }) => peer.userId === leftUserId);
             if (peerRefOfLeftUser) {
                 const remainingCalls = calls.filter((call) => call.peeruserId !== leftUserId);
-                console.log(remainingCalls);
 
                 peerRefOfLeftUser.peer.destroy();
                 setCalls(remainingCalls);
@@ -164,17 +156,14 @@ export const Room = () => {
         });
 
         return () => {
-            console.log(`useEffect: socket.off userLeft event`);
             socket.off('userLeft');
         }
     }, [calls.length])
 
-    useEffect(() => {
-        console.log('useEffect: somebody is typing code');
-    }, [code])
+    // useEffect(() => {
+    // }, [code])
 
     const createPeer = (userIdToCall: string, callerId: string, stream: MediaStream) => {
-        console.log('createPeer');
 
         const peer = new Peer({ initiator: true, trickle: false, stream });
 
@@ -186,7 +175,6 @@ export const Room = () => {
     }
 
     const addPeer = (callerId: string, incomingSignalData: Peer.SignalData, stream: MediaStream) => {
-        console.log('addPeer');
 
         const peer = new Peer({ initiator: false, trickle: false, stream });
 
@@ -203,19 +191,6 @@ export const Room = () => {
         setIsScreenSharing(true);
         navigator.mediaDevices.getDisplayMedia({ video: true })
             .then(stream => {
-                console.log('user stream track ');
-                console.log(userstream.current?.getVideoTracks()[0]);
-
-                console.log('user stream');
-                console.log(userstream.current);
-
-                console.log('screen stream track ');
-                console.log(stream.getVideoTracks()[0]);
-
-                console.log('screen stream');
-                console.log(stream);
-
-
 
                 //TODO: if user turns off camera and want to share screen, don't need to replace track? but just add
                 // let userVideoRef recieve stream from user screen
@@ -225,7 +200,6 @@ export const Room = () => {
 
                 // tell peers connected with this user to replace stream
                 calls.forEach(call => {
-                    console.log(userstream.current!.getVideoTracks()[0]);
 
                     call.peer.replaceTrack(
                         // might need to check userstream current is not null for sure
@@ -261,8 +235,6 @@ export const Room = () => {
             navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
                 .then(stream => {
 
-                    console.log(stream.getTracks());
-
                     const dest = audioContext.createMediaStreamDestination();
 
                     const peerAudioTracks = calls.reduce((prevVal, curVal) =>
@@ -288,12 +260,9 @@ export const Room = () => {
                     // add video track from display media
                     finalScreenStream.addTrack(stream.getVideoTracks()[0]);
 
-                    console.log(finalScreenStream);
-
                     userScreenRecordingStream.current = finalScreenStream;
 
                     finalScreenStream.getVideoTracks()[0].onended = () => {
-                        console.log('screen record track is abt to stop...');
                         endRecordingScreen();
                     }
 
@@ -306,7 +275,6 @@ export const Room = () => {
                     }
 
                     mediaRecorderRef.current.onstop = event => {
-                        console.log('mediaRecorder onStopped called');
                         mediaRecorderRef.current = undefined;
 
                         const blob = new Blob(recordedChunks, {
@@ -327,7 +295,6 @@ export const Room = () => {
                         link.click();
                     }
 
-                    console.log('mediaRecorder onStart called');
                     mediaRecorderRef.current.start();
 
                     setIsScreenRecording(true);
@@ -336,7 +303,6 @@ export const Room = () => {
     }
 
     const endRecordingScreen = () => {
-        console.log('endRecordingScreen called');
         console.log(mediaRecorderRef.current);
 
         if (userScreenRecordingStream.current) {
@@ -346,14 +312,12 @@ export const Room = () => {
         }
 
         if (mediaRecorderRef.current) {
-            console.log('mediaRecorder onStart called');
             mediaRecorderRef.current.stop();
             setIsScreenRecording(false);
         }
     }
 
     const endScreenShare = () => {
-        console.log('screen share has ended');
         setIsScreenSharing(false);
     }
 
@@ -426,16 +390,13 @@ export const Room = () => {
                             //     flexGrow: 5,
                             // }}
                             extensions={[javascript({ jsx: true })]}
-                            onChange={(value, viewUpdate) => {
-                                console.log('value:', value);
-                                socket.emit('codeChanged', roomId!, value);
-                            }}
+                            onChange={debounceCodeChangeHandler}
                         />
                         <div style={{
                             flex: 1,
                             // flexGrow: 1,
                         }}>
-                            <SocialMediaShare roomId={roomId ? roomId : ''}/>
+                            <SocialMediaShare roomId={roomId ? roomId : ''} />
                         </div>
                     </div>
                 </div>

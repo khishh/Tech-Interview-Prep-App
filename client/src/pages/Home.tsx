@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { socket } from '../Socket';
 import { SocketContext } from '../SocketContext';
 import '../index.css';
+import Footer from '../components/Footer';
 
 export const Home = () => {
 
@@ -15,18 +16,6 @@ export const Home = () => {
     const [isCreatingRoom, setisCreatingRoom] = useState(false);
 
     const navigate = useNavigate();
-
-    console.log(username);
-    console.log(_roomId);
-
-    // const screenShareRef = useRef<HTMLVideoElement | null>(null);
-
-    // navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
-    //     .then(stream => {
-    //         if (screenShareRef.current) {
-    //             screenShareRef.current.srcObject = stream;
-    //         }
-    //     });
 
     if (!socket.connected) {
         console.log('reconnecting socket');
@@ -61,30 +50,34 @@ export const Home = () => {
     }
 
     return (
-        <>
-            <h1 className="text-2xl p-3">Online Tech Interview Prep App</h1>
+        <div style={{ display: "flex", flexDirection: "column", height: '100vh', alignItems: 'center'}}>
+            <div style={{ flex: 1 }}>
+                <h1 className="text-2xl p-3">Online Tech Interview Prep App</h1>
 
-            {!isCreatingRoom && <div className="p-2">
-                <TextField id="outlined-basic" label="Room Id" variant="outlined" value={roomId} onChange={event => setRoom(event.target.value)} />
-            </div>}
+                {!isCreatingRoom && <div className="p-3">
+                    <TextField style={{width: "100%"}} id="outlined-basic" label="Room ID" variant="outlined" value={roomId} onChange={event => setRoom(event.target.value)} />
+                </div>}
 
-            <div className="p-2">
-                <TextField id="outlined-basic" label="Username" variant="outlined" value={username} onChange={event => setUsername(event.target.value)} />
+                <div className="p-3" style={{ alignItems: 'center' }}>
+                    <TextField style={{width: "100%"}} id="outlined-basic" label="Username" variant="outlined" value={username} onChange={event => setUsername(event.target.value)} />
+                </div>
+                {
+                    !isCreatingRoom && <Button variant="contained" style={buttonStyle} onClick={joinRoom}>Join Room</Button>
+                }
+                {
+                    isCreatingRoom && <Button style={buttonStyle} variant="contained" onClick={createRoom}>Create Room</Button>
+                }
+
+                <Button style={buttonStyle} variant="outlined" onClick={() => setisCreatingRoom(prev => !prev)}>{isCreatingRoom ? 'Join an existing room' : 'Create a new room'}</Button>
             </div>
-            {
-                !isCreatingRoom && <div className="p-2"><Button variant="contained" onClick={joinRoom}>Join Room</Button></div>
-            }
-            {
-                isCreatingRoom && <div className="p-2"><Button className="p-2" variant="contained" onClick={createRoom}>Create Room</Button></div>
-            }
 
-            <Button variant="outlined" onClick={() => setisCreatingRoom(prev => !prev)}>{isCreatingRoom ? 'Join an existing room' : 'Create a new room'}</Button>
+            <Footer />
 
-
-        </>
+        </div>
     )
 }
 
-// type HomeProps = {
-//     roomId? : string
-// }
+const buttonStyle = {
+    margin: '1rem auto',
+    display: "block"
+}

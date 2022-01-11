@@ -5,13 +5,9 @@ import '../index.css';
 
 export const PeerVideoPlayer = (props: PeerVideoPlayerProps) => {
 
-
-    console.log('PeerVideoPlayer rerendered ...' + props.userId);
     const videoRef = useRef<HTMLVideoElement | null>(null);
 
     useEffect(() => {
-        console.log('useEffect: PeerVideoPlayer userId has changed!');
-
         if (videoRef.current) {
             videoRef.current.srcObject = props.stream;
         }
@@ -21,14 +17,11 @@ export const PeerVideoPlayer = (props: PeerVideoPlayerProps) => {
     return (
         <Grid item xs={12} md={6}>
             <Paper className='videocall'>
-                {/* <Typography style={{ padding: '10' }} variant="h5" gutterBottom>{props.peerUserName || 'Name'}</Typography> */}
                 <video playsInline autoPlay ref={videoRef} />
                 <div className="overlay">
                     <div>{props.peerUserName}</div>
                     <Button variant="contained" onClick={() => props.requestFullScreenMode(videoRef.current!)}>View FullScreen</Button>
-                </div>
-                {/* temporary fullscreen */}
-                
+                </div>                
             </Paper>
         </Grid>
     )
