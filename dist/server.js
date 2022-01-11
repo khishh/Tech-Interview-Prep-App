@@ -85,11 +85,11 @@ io.on("connection", (socket) => {
         userInfo.delete(socket.id);
     });
     socket.on('codeChanged', (roomId, code) => {
-        console.log(code);
+        // console.log(code);
         roomInfo.set(roomId, {
             code: code
         });
-        io.to(roomId).emit('distributeCode', code);
+        socket.to(roomId).emit('distributeCode', code);
     });
     socket.on('fetchCode', (roomId) => {
         io.to(socket.id).emit('distributeCode', roomInfo.get(roomId).code);

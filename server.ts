@@ -109,11 +109,11 @@ io.on("connection", (socket) => {
     });
 
     socket.on('codeChanged', (roomId, code) => {
-        console.log(code);
+        // console.log(code);
         roomInfo.set(roomId, {
             code: code
         });
-        io.to(roomId).emit('distributeCode', code);
+        socket.to(roomId).emit('distributeCode', code);
     });
 
     socket.on('fetchCode', (roomId) => {

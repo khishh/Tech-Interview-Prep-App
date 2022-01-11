@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { VideoPlayer } from "../components/VideoPlayer";
 import { socket } from "../Socket";
@@ -8,12 +8,21 @@ import { PeerVideoPlayer } from "../components/PeerVideoPlayer";
 import { Grid } from "@mui/material";
 import '../index.css';
 
-import CodeMirror, { ViewUpdate } from '@uiw/react-codemirror';
-import { javascript } from '@codemirror/lang-javascript';
 import RoomHeader from "../components/RoomHeader";
 import Footer from "../components/Footer";
 import SocialMediaShare from "../components/SocialMediaShare";
-import _ from 'lodash';
+
+import AceEditor from "react-ace";
+import "ace-builds/src-min-noconflict/mode-javascript";
+import "ace-builds/src-min-noconflict/theme-tomorrow_night_eighties";
+import 'ace-builds/src-noconflict/theme-monokai'
+import "ace-builds/src-min-noconflict/ext-language_tools";
+import "ace-builds/src-min-noconflict/ext-spellcheck";
+import "ace-builds/src-min-noconflict/snippets/javascript";
+import 'ace-builds/src-min-noconflict/ext-searchbox';
+const ace = require('ace-builds/src-noconflict/ace');
+ace.config.set("basePath", "https://cdn.jsdelivr.net/npm/ace-builds@1.4.13/src-noconflict/");
+ace.config.setModuleUrl('ace/mode/javascript_worker', "https://cdn.jsdelivr.net/npm/ace-builds@1.4.13/src-noconflict/worker-javascript.js");
 
 export const Room = () => {
 
@@ -33,16 +42,6 @@ export const Room = () => {
     const userScreenRecordingStream = useRef<MediaStream>();
     const screenShareStream = useRef<MediaStream>();
     const mediaRecorderRef = useRef<MediaRecorder>();
-
-
-    const emitCodeChanged = (value: string, viewUpdate: ViewUpdate) => {
-        socket.emit('codeChanged', roomId!, value);
-    }
-
-    const debounceCodeChangeHandler = useCallback(
-        _.debounce(emitCodeChanged, 200),
-        [],
-    )
 
     const audioContext = new AudioContext();
 
@@ -122,6 +121,7 @@ export const Room = () => {
                 });
 
                 socket.on('distributeCode', (code) => {
+                    console.log("new code from others update\n" + code);
                     setCode(code);
                 });
             });
@@ -159,9 +159,6 @@ export const Room = () => {
             socket.off('userLeft');
         }
     }, [calls.length])
-
-    // useEffect(() => {
-    // }, [code])
 
     const createPeer = (userIdToCall: string, callerId: string, stream: MediaStream) => {
 
@@ -379,22 +376,31 @@ export const Room = () => {
                         {calls.map(call => <PeerVideoPlayer key={call.peeruserId} userId={call.peeruserId} peerUserName={call.peername} peer={call.peer} stream={call.stream} requestFullScreenMode={requestFullScreen} />)}
                     </Grid>
                     <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                        <CodeMirror
-                            value={code}
+                        <AceEditor
+                            placeholder="Placeholder Text"
+                            mode="javascript"
+                            theme="monokai"
+                            name="ace-editor"
+                            onChange={(value: string, event: Event) => {
+                                socket.emit('codeChanged', roomId!, value);
+                                setCode(value);
+                            }}
                             width='100%'
-                            maxWidth="50vw"
-                            minHeight="80vh"
-                            maxHeight="80vh"
                             height="80vh"
-                            // style={{
-                            //     flexGrow: 5,
-                            // }}
-                            extensions={[javascript({ jsx: true })]}
-                            onChange={debounceCodeChangeHandler}
-                        />
+                            fontSize={14}
+                            showPrintMargin={true}
+                            showGutter={true}
+                            highlightActiveLine={true}
+                            value={code}
+                            setOptions={{
+                                enableBasicAutocompletion: true,
+                                enableLiveAutocompletion: true,
+                                enableSnippets: false,
+                                showLineNumbers: true,
+                                tabSize: 2,
+                            }} />
                         <div style={{
                             flex: 1,
-                            // flexGrow: 1,
                         }}>
                             <SocialMediaShare roomId={roomId ? roomId : ''} />
                         </div>
